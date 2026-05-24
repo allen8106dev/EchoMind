@@ -45,3 +45,5 @@ flutter:
 
   assets:
     - assets/logo.png
+
+flutter_background_service: ^5.0.6
