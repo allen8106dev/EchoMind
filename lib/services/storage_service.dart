@@ -9,17 +9,19 @@ class StorageService {
     await Hive.openBox(boxName);
   }
 
-  static Future addEntry(DiaryEntry entry) async {
+  static Future saveEntry(DiaryEntry entry) async {
     final box = Hive.box(boxName);
 
-    await box.add(entry.toMap());
+    await box.put(entry.date, entry.toMap());
   }
 
-  static List<DiaryEntry> getEntries() {
+  static DiaryEntry? getEntry(String date) {
     final box = Hive.box(boxName);
 
-    return box.values
-        .map((e) => DiaryEntry.fromMap(Map<String, dynamic>.from(e)))
-        .toList();
+    final data = box.get(date);
+
+    if (data == null) return null;
+
+    return DiaryEntry.fromMap(Map<String, dynamic>.from(data));
   }
 }

@@ -1,23 +1,23 @@
 class DiaryEntry {
-  final String text;
-  final DateTime createdAt;
+  final String date;
+  final String content;
 
   DiaryEntry({
-    required this.text,
-    required this.createdAt,
+    required this.date,
+    required this.content,
   });
 
   Map<String, dynamic> toMap() {
     return {
-      'text': text,
-      'createdAt': createdAt.toIso8601String(),
+      'date': date,
+      'content': content,
     };
   }
 
   factory DiaryEntry.fromMap(Map map) {
     return DiaryEntry(
-      text: map['text'],
-      createdAt: DateTime.parse(map['createdAt']),
+      date: map['date'],
+      content: map['content'],
     );
   }
 }
