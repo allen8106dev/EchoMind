@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'services/storage_service.dart';
-import 'screens/splash_screen.dart';
 import 'services/notification_service.dart';
+import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'EchoMind',
       theme: ThemeData.dark(),
-      home: const SplashScreen(),
+      home: const HomeScreen(),
     );
   }
 }

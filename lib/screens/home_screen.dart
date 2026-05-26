@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
 import '../models/diary_entry.dart';
 import '../services/storage_service.dart';
+import '../services/ai_service.dart';
+import '../services/ai_response.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,6 +13,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  AIResponse? aiResponse;
+
+  bool isLoadingSummary = false;
 
   DateTime selectedDate = DateTime.now();
 
@@ -65,6 +69,46 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     loadEntry();
+  }
+
+  Future generateSummary() async {
+
+    if (controller.text.trim().isEmpty) {
+      return;
+    }
+
+    setState(() {
+      isLoadingSummary = true;
+    });
+
+    try {
+
+      final response =
+      await AIService.summarizeDay(
+        controller.text,
+      );
+
+      setState(() {
+        aiResponse = response;
+      });
+
+    } catch (e) {
+
+      print("ERROR: $e");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+
+        SnackBar(
+          content: Text(
+            e.toString(),
+          ),
+        ),
+      );
+    }
+
+    setState(() {
+      isLoadingSummary = false;
+    });
   }
 
   Future pickDate() async {
@@ -164,6 +208,123 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ),
+            const SizedBox(height: 20),
+
+            SizedBox(
+              width: double.infinity,
+
+              child: ElevatedButton.icon(
+                onPressed:
+                isLoadingSummary
+                    ? null
+                    : generateSummary,
+
+                icon: const Icon(Icons.auto_awesome),
+
+                label: Text(
+                  isLoadingSummary
+                      ? "Generating..."
+                      : "Summarize My Day",
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            if (aiResponse != null)
+
+              Container(
+                width: double.infinity,
+
+                padding: const EdgeInsets.all(16),
+
+                decoration: BoxDecoration(
+                  color: Colors.white10,
+
+                  borderRadius:
+                  BorderRadius.circular(20),
+                ),
+
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+
+                  children: [
+
+                    Text(
+                      aiResponse!.title,
+
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Text(
+                      "Mood: ${aiResponse!.mood}",
+
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Text(
+                      aiResponse!.summary,
+
+                      style: const TextStyle(
+                        fontSize: 16,
+                        height: 1.5,
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    const Text(
+                      "Highlights",
+
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    ...aiResponse!.highlights.map(
+                          (highlight) => Padding(
+                        padding:
+                        const EdgeInsets.only(
+                          bottom: 4,
+                        ),
+
+                        child: Text(
+                          "• $highlight",
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    const Text(
+                      "Suggestion",
+
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Text(
+                      aiResponse!.suggestion,
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
