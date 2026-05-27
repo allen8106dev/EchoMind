@@ -5,6 +5,7 @@ import '../models/diary_entry.dart';
 import '../services/storage_service.dart';
 
 class QuickAddScreen extends StatefulWidget {
+
   const QuickAddScreen({super.key});
 
   @override
@@ -15,14 +16,20 @@ class QuickAddScreen extends StatefulWidget {
 class _QuickAddScreenState
     extends State<QuickAddScreen> {
 
-  final controller = TextEditingController();
+  final controller =
+  TextEditingController();
+
+  List<Map<String, dynamic>>
+  entries = [];
 
   String get today =>
+
       DateFormat('yyyy-MM-dd')
           .format(DateTime.now());
 
   @override
   void initState() {
+
     super.initState();
 
     loadTodayEntry();
@@ -33,29 +40,75 @@ class _QuickAddScreenState
     final entry =
     StorageService.getEntry(today);
 
-    controller.text =
-        entry?.content ?? "";
+    entries =
+        entry?.entries ?? [];
   }
 
-  Future saveEntry() async {
+  Future saveQuickEntry() async {
+
+    if (controller.text
+        .trim()
+        .isEmpty) {
+      return;
+    }
+
+    final existingEntry =
+    StorageService.getEntry(today);
+
+    final existingAI =
+        existingEntry?.aiReflection;
+
+    entries.add({
+
+      "time":
+      DateFormat('hh:mm a')
+          .format(DateTime.now()),
+
+      "content":
+      controller.text.trim(),
+    });
 
     final entry = DiaryEntry(
+
       date: today,
-      content: controller.text,
+
+      entries: entries,
+
+      aiReflection:
+      existingAI,
+
+      aiNeedsRefresh: true,
     );
 
     await StorageService
         .saveEntry(entry);
+
+    controller.clear();
+
+    if (mounted) {
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+
+        const SnackBar(
+          content: Text(
+            "Entry added",
+          ),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
+
       backgroundColor:
       const Color(0xFF0F172A),
 
       appBar: AppBar(
+
         backgroundColor:
         const Color(0xFF0F172A),
 
@@ -65,14 +118,20 @@ class _QuickAddScreenState
       ),
 
       body: Padding(
-        padding: const EdgeInsets.all(16),
+
+        padding:
+        const EdgeInsets.all(16),
 
         child: Column(
+
           children: [
 
             Expanded(
+
               child: TextField(
-                controller: controller,
+
+                controller:
+                controller,
 
                 autofocus: true,
 
@@ -81,12 +140,17 @@ class _QuickAddScreenState
                 minLines: null,
 
                 style: const TextStyle(
+
                   color: Colors.white,
+
                   fontSize: 16,
+
                   height: 1.5,
                 ),
 
-                decoration: InputDecoration(
+                decoration:
+                InputDecoration(
+
                   hintText:
                   "Write your thoughts...",
 
@@ -102,19 +166,40 @@ class _QuickAddScreenState
 
                   border:
                   OutlineInputBorder(
+
                     borderRadius:
-                    BorderRadius
-                        .circular(20),
+                    BorderRadius.circular(
+                      20,
+                    ),
                   ),
 
                   contentPadding:
-                  const EdgeInsets
-                      .all(20),
+                  const EdgeInsets.all(
+                    20,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            SizedBox(
+
+              width: double.infinity,
+
+              child:
+              ElevatedButton.icon(
+
+                onPressed:
+                saveQuickEntry,
+
+                icon: const Icon(
+                  Icons.add,
                 ),
 
-                onChanged: (_) {
-                  saveEntry();
-                },
+                label: const Text(
+                  "Add Entry",
+                ),
               ),
             ),
           ],

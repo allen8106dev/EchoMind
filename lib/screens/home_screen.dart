@@ -19,6 +19,7 @@ class _HomeScreenState
     extends State<HomeScreen> {
 
   AIResponse? aiResponse;
+  bool aiNeedsRefresh = false;
 
   bool isLoadingSummary = false;
 
@@ -53,6 +54,19 @@ class _HomeScreenState
     );
 
     entries = entry?.entries ?? [];
+    aiNeedsRefresh =
+        entry?.aiNeedsRefresh ?? false;
+
+    if (entry?.aiReflection != null) {
+
+      aiResponse = AIResponse.fromJson(
+        entry!.aiReflection!,
+      );
+
+    } else {
+
+      aiResponse = null;
+    }
 
     setState(() {});
   }
@@ -60,8 +74,16 @@ class _HomeScreenState
   Future saveEntry() async {
 
     final entry = DiaryEntry(
+
       date: formattedDate,
+
       entries: entries,
+
+      aiReflection:
+      aiResponse?.toJson(),
+
+      aiNeedsRefresh:
+      aiNeedsRefresh,
     );
 
     await StorageService
@@ -87,7 +109,7 @@ class _HomeScreenState
     });
 
     controller.clear();
-
+    aiNeedsRefresh = true;
     await saveEntry();
 
     setState(() {});
@@ -143,6 +165,7 @@ class _HomeScreenState
                 entries[index]['content'] =
                     editController.text.trim();
 
+                aiNeedsRefresh = true;
                 await saveEntry();
 
                 setState(() {});
@@ -162,6 +185,7 @@ class _HomeScreenState
 
     entries.removeAt(index);
 
+    aiNeedsRefresh = true;
     await saveEntry();
 
     setState(() {});
@@ -197,6 +221,25 @@ class _HomeScreenState
       return;
     }
 
+    // LOAD SAVED AI
+    if (aiResponse != null &&
+        aiNeedsRefresh == false) {
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+
+        const SnackBar(
+          content: Text(
+            "Loaded saved reflection",
+          ),
+        ),
+      );
+
+      setState(() {});
+
+      return;
+    }
+
     setState(() {
       isLoadingSummary = true;
     });
@@ -216,9 +259,13 @@ class _HomeScreenState
         combinedText,
       );
 
-      setState(() {
-        aiResponse = response;
-      });
+      aiResponse = response;
+
+      aiNeedsRefresh = false;
+
+      await saveEntry();
+
+      setState(() {});
 
     } catch (e) {
 
@@ -596,7 +643,11 @@ class _HomeScreenState
 
                   isLoadingSummary
                       ? "Generating..."
-                      : "Summarize My Day",
+                      : aiResponse == null
+                      ? "Generate Summary"
+                      : aiNeedsRefresh
+                      ? "Regenerate Summary"
+                      : "View Saved Summary",
                 ),
               ),
             ),
