@@ -1,23 +1,30 @@
 class DiaryEntry {
+
   final String date;
-  final String content;
+
+  final List<Map<String, dynamic>> entries;
 
   DiaryEntry({
     required this.date,
-    required this.content,
+    required this.entries,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'date': date,
-      'content': content,
+      'entries': entries,
     };
   }
 
-  factory DiaryEntry.fromMap(Map map) {
+  factory DiaryEntry.fromMap(Map<String, dynamic> map) {
     return DiaryEntry(
-      date: map['date'],
-      content: map['content'],
+      date: map['date'] ?? '',
+
+        entries: (map['entries'] as List? ?? [])
+            .map(
+              (e) => Map<String, dynamic>.from(e as Map),
+        )
+            .toList(),
     );
   }
 }
