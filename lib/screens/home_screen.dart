@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
+import 'package:flutter/services.dart';
 import '../models/diary_entry.dart';
 import '../services/storage_service.dart';
 import '../services/ai_service.dart';
@@ -620,80 +620,124 @@ class _HomeScreenState
 
                     return GestureDetector(
 
-                      onLongPress: () {
+                      onLongPress: () async {
 
-                        FocusScope.of(context)
-                            .unfocus();
+                        // HAPTIC FEEDBACK
+                        await HapticFeedback.mediumImpact();
+
+                        if (!context.mounted) return;
 
                         showModalBottomSheet(
 
                           context: context,
 
+                          backgroundColor: const Color(0xFF1E293B),
+
+                          shape: const RoundedRectangleBorder(
+
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(28),
+                            ),
+                          ),
+
+                          transitionAnimationController:
+                          AnimationController(
+
+                            vsync: Navigator.of(context),
+
+                            duration: const Duration(
+                              milliseconds: 280,
+                            ),
+                          ),
+
                           builder: (context) {
 
                             return SafeArea(
 
-                              child: Column(
+                              child: Padding(
 
-                                mainAxisSize:
-                                MainAxisSize.min,
+                                padding: const EdgeInsets.only(
+                                  top: 8,
+                                  bottom: 12,
+                                ),
 
-                                children: [
+                                child: Column(
 
-                                  ListTile(
+                                  mainAxisSize:
+                                  MainAxisSize.min,
 
-                                    leading:
-                                    const Icon(
-                                      Icons.edit,
-                                    ),
+                                  children: [
 
-                                    title:
-                                    const Text(
-                                      "Edit Entry",
-                                    ),
+                                    Container(
 
-                                    onTap: () {
+                                      width: 40,
+                                      height: 4,
 
-                                      Navigator.pop(
-                                        context,
-                                      );
+                                      decoration: BoxDecoration(
 
-                                      editEntry(
-                                        index,
-                                      );
-                                    },
-                                  ),
+                                        color: Colors.white
+                                            .withValues(alpha: 0.25),
 
-                                  ListTile(
-
-                                    leading:
-                                    const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ),
-
-                                    title:
-                                    const Text(
-
-                                      "Delete Entry",
-
-                                      style: TextStyle(
-                                        color: Colors.red,
+                                        borderRadius:
+                                        BorderRadius.circular(20),
                                       ),
                                     ),
 
-                                    onTap: () {
+                                    const SizedBox(height: 12),
 
-                                      Navigator.pop(
-                                        context,
-                                      );
+                                    ListTile(
 
-                                      deleteEntry(
-                                        index,
-                                      );
-                                    },
-                                  ),
-                                ],
+                                      leading: const Icon(
+                                        Icons.edit_rounded,
+                                      ),
+
+                                      title: const Text(
+                                        "Edit Entry",
+                                      ),
+
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                        BorderRadius.circular(16),
+                                      ),
+
+                                      onTap: () {
+
+                                        Navigator.pop(context);
+
+                                        editEntry(index);
+                                      },
+                                    ),
+
+                                    ListTile(
+
+                                      leading: const Icon(
+                                        Icons.delete_rounded,
+                                        color: Colors.red,
+                                      ),
+
+                                      title: const Text(
+
+                                        "Delete Entry",
+
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                        ),
+                                      ),
+
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                        BorderRadius.circular(16),
+                                      ),
+
+                                      onTap: () {
+
+                                        Navigator.pop(context);
+
+                                        deleteEntry(index);
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
                             );
                           },
