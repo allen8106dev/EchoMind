@@ -19,6 +19,7 @@ class _HomeScreenState
     extends State<HomeScreen> {
 
   AIResponse? aiResponse;
+
   bool aiNeedsRefresh = false;
 
   bool isLoadingSummary = false;
@@ -27,6 +28,9 @@ class _HomeScreenState
 
   final TextEditingController controller =
   TextEditingController();
+
+  final FocusNode entryFocusNode =
+  FocusNode();
 
   List<Map<String, dynamic>> entries = [];
 
@@ -54,6 +58,7 @@ class _HomeScreenState
     );
 
     entries = entry?.entries ?? [];
+
     aiNeedsRefresh =
         entry?.aiNeedsRefresh ?? false;
 
@@ -109,7 +114,9 @@ class _HomeScreenState
     });
 
     controller.clear();
+
     aiNeedsRefresh = true;
+
     await saveEntry();
 
     setState(() {});
@@ -166,6 +173,7 @@ class _HomeScreenState
                     editController.text.trim();
 
                 aiNeedsRefresh = true;
+
                 await saveEntry();
 
                 setState(() {});
@@ -186,6 +194,7 @@ class _HomeScreenState
     entries.removeAt(index);
 
     aiNeedsRefresh = true;
+
     await saveEntry();
 
     setState(() {});
@@ -221,21 +230,10 @@ class _HomeScreenState
       return;
     }
 
-    // LOAD SAVED AI
     if (aiResponse != null &&
         aiNeedsRefresh == false) {
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-
-        const SnackBar(
-          content: Text(
-            "Loaded saved reflection",
-          ),
-        ),
-      );
-
-      setState(() {});
+      showSummarySheet();
 
       return;
     }
@@ -267,6 +265,8 @@ class _HomeScreenState
 
       setState(() {});
 
+      showSummarySheet();
+
     } catch (e) {
 
       print("ERROR: $e");
@@ -284,6 +284,212 @@ class _HomeScreenState
 
     setState(() {
       isLoadingSummary = false;
+    });
+  }
+
+  void showSummarySheet() {
+
+    FocusScope.of(context).unfocus();
+
+    showModalBottomSheet(
+
+      context: context,
+
+      isScrollControlled: true,
+
+      backgroundColor:
+      const Color(0xFF111827),
+
+      shape:
+      const RoundedRectangleBorder(
+
+        borderRadius:
+        BorderRadius.vertical(
+
+          top: Radius.circular(30),
+        ),
+      ),
+
+      builder: (context) {
+
+        return DraggableScrollableSheet(
+
+          expand: false,
+
+          initialChildSize: 0.8,
+
+          minChildSize: 0.5,
+
+          maxChildSize: 0.95,
+
+          builder: (context, scrollController) {
+
+            return Padding(
+
+              padding:
+              const EdgeInsets.all(20),
+
+              child: SingleChildScrollView(
+
+                controller:
+                scrollController,
+
+                child: Column(
+
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+
+                  children: [
+
+                    Center(
+
+                      child: Container(
+
+                        width: 50,
+                        height: 5,
+
+                        decoration:
+                        BoxDecoration(
+
+                          color:
+                          Colors.white24,
+
+                          borderRadius:
+                          BorderRadius.circular(
+                            20,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    Text(
+
+                      aiResponse!.title,
+
+                      style:
+                      const TextStyle(
+
+                        fontSize: 26,
+
+                        fontWeight:
+                        FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Text(
+
+                      "Mood: ${aiResponse!.mood}",
+
+                      style:
+                      const TextStyle(
+
+                        fontSize: 15,
+
+                        color: Colors.grey,
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    Text(
+
+                      aiResponse!.summary,
+
+                      style:
+                      const TextStyle(
+
+                        fontSize: 17,
+
+                        height: 1.7,
+                      ),
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    const Text(
+
+                      "Highlights",
+
+                      style: TextStyle(
+
+                        fontSize: 18,
+
+                        fontWeight:
+                        FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    ...aiResponse!
+                        .highlights
+                        .map(
+
+                          (highlight) {
+
+                        return Padding(
+
+                          padding:
+                          const EdgeInsets.only(
+                            bottom: 10,
+                          ),
+
+                          child: Text(
+
+                            "• $highlight",
+
+                            style:
+                            const TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    const Text(
+
+                      "Suggestion",
+
+                      style: TextStyle(
+
+                        fontSize: 18,
+
+                        fontWeight:
+                        FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Text(
+
+                      aiResponse!.suggestion,
+
+                      style:
+                      const TextStyle(
+                        fontSize: 16,
+                        height: 1.6,
+                      ),
+                    ),
+
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    ).then((_) {
+
+      FocusScope.of(context).unfocus();
     });
   }
 
@@ -314,7 +520,13 @@ class _HomeScreenState
   @override
   Widget build(BuildContext context) {
 
+    final keyboardOpen =
+        MediaQuery.of(context)
+            .viewInsets.bottom > 0;
+
     return Scaffold(
+
+      resizeToAvoidBottomInset: false,
 
       appBar: AppBar(
 
@@ -335,451 +547,348 @@ class _HomeScreenState
         ],
       ),
 
-      body: Padding(
+      body: SafeArea(
 
-        padding:
-        const EdgeInsets.all(16),
+        child: Padding(
 
-        child: Column(
+          padding:
+          const EdgeInsets.all(16),
 
-          children: [
+          child: Column(
 
-            Row(
+            children: [
 
-              mainAxisAlignment:
-              MainAxisAlignment
-                  .spaceBetween,
+              Row(
 
-              children: [
-
-                IconButton(
-
-                  onPressed:
-                  previousDay,
-
-                  icon: const Icon(
-                    Icons.arrow_left,
-                  ),
-                ),
-
-                Text(
-
-                  displayDate,
-
-                  style:
-                  const TextStyle(
-
-                    fontSize: 18,
-
-                    fontWeight:
-                    FontWeight.bold,
-                  ),
-                ),
-
-                IconButton(
-
-                  onPressed:
-                  nextDay,
-
-                  icon: const Icon(
-                    Icons.arrow_right,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            Expanded(
-
-              child: Column(
+                mainAxisAlignment:
+                MainAxisAlignment
+                    .spaceBetween,
 
                 children: [
 
-                  Expanded(
+                  IconButton(
 
-                    child:
-                    ListView.builder(
+                    onPressed:
+                    previousDay,
 
-                      itemCount:
-                      entries.length,
-
-                      itemBuilder:
-                          (context, index) {
-
-                        final entry =
-                        entries[index];
-
-                        return GestureDetector(
-
-                          onLongPress: () {
-
-                            showModalBottomSheet(
-
-                              context: context,
-
-                              builder: (context) {
-
-                                return SafeArea(
-
-                                  child: Column(
-
-                                    mainAxisSize:
-                                    MainAxisSize.min,
-
-                                    children: [
-
-                                      ListTile(
-
-                                        leading:
-                                        const Icon(
-                                          Icons.edit,
-                                        ),
-
-                                        title:
-                                        const Text(
-                                          "Edit Entry",
-                                        ),
-
-                                        onTap: () {
-
-                                          Navigator.pop(
-                                            context,
-                                          );
-
-                                          editEntry(
-                                            index,
-                                          );
-                                        },
-                                      ),
-
-                                      ListTile(
-
-                                        leading:
-                                        const Icon(
-                                          Icons.delete,
-                                          color: Colors.red,
-                                        ),
-
-                                        title:
-                                        const Text(
-
-                                          "Delete Entry",
-
-                                          style: TextStyle(
-                                            color: Colors.red,
-                                          ),
-                                        ),
-
-                                        onTap: () {
-
-                                          Navigator.pop(
-                                            context,
-                                          );
-
-                                          deleteEntry(
-                                            index,
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            );
-                          },
-
-                          child: Container(
-
-                            width:
-                            double.infinity,
-
-                            margin:
-                            const EdgeInsets.only(
-                              bottom: 12,
-                            ),
-
-                            padding:
-                            const EdgeInsets.all(16),
-
-                            decoration:
-                            BoxDecoration(
-
-                              color:
-                              Colors.white10,
-
-                              borderRadius:
-                              BorderRadius.circular(
-                                20,
-                              ),
-                            ),
-
-                            child: Column(
-
-                              crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .start,
-
-                              children: [
-
-                                Text(
-
-                                  entry['time'],
-
-                                  style:
-                                  TextStyle(
-
-                                    fontSize: 11,
-
-                                    color:
-                                    Colors.white
-                                        .withOpacity(
-                                      0.6,
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(
-                                  height: 6,
-                                ),
-
-                                Text(
-
-                                  entry['content'],
-
-                                  style:
-                                  const TextStyle(
-
-                                    fontSize: 16,
-
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                    icon: const Icon(
+                      Icons.arrow_left,
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  Text(
 
-                  TextField(
+                    displayDate,
 
-                    controller:
-                    controller,
+                    style:
+                    const TextStyle(
 
-                    minLines: 1,
-                    maxLines: 5,
+                      fontSize: 18,
 
-                    decoration:
-                    InputDecoration(
-
-                      hintText:
-                      "Write a quick thought...",
-
-                      border:
-                      OutlineInputBorder(
-
-                        borderRadius:
-                        BorderRadius.circular(
-                          20,
-                        ),
-                      ),
-
-                      contentPadding:
-                      const EdgeInsets.all(
-                        16,
-                      ),
+                      fontWeight:
+                      FontWeight.bold,
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  IconButton(
 
-                  SizedBox(
+                    onPressed:
+                    nextDay,
 
-                    width:
-                    double.infinity,
-
-                    child:
-                    ElevatedButton.icon(
-
-                      onPressed:
-                      addEntry,
-
-                      icon: const Icon(
-                        Icons.add,
-                      ),
-
-                      label: const Text(
-                        "Add Entry",
-                      ),
+                    icon: const Icon(
+                      Icons.arrow_right,
                     ),
                   ),
                 ],
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            SizedBox(
+              Expanded(
 
-              width: double.infinity,
+                child:
+                ListView.builder(
 
-              child:
-              ElevatedButton.icon(
+                  itemCount:
+                  entries.length,
 
-                onPressed:
-                isLoadingSummary
-                    ? null
-                    : generateSummary,
+                  itemBuilder:
+                      (context, index) {
 
-                icon: const Icon(
-                  Icons.auto_awesome,
-                ),
+                    final entry =
+                    entries[index];
 
-                label: Text(
+                    return GestureDetector(
 
-                  isLoadingSummary
-                      ? "Generating..."
-                      : aiResponse == null
-                      ? "Generate Summary"
-                      : aiNeedsRefresh
-                      ? "Regenerate Summary"
-                      : "View Saved Summary",
+                      onLongPress: () {
+
+                        FocusScope.of(context)
+                            .unfocus();
+
+                        showModalBottomSheet(
+
+                          context: context,
+
+                          builder: (context) {
+
+                            return SafeArea(
+
+                              child: Column(
+
+                                mainAxisSize:
+                                MainAxisSize.min,
+
+                                children: [
+
+                                  ListTile(
+
+                                    leading:
+                                    const Icon(
+                                      Icons.edit,
+                                    ),
+
+                                    title:
+                                    const Text(
+                                      "Edit Entry",
+                                    ),
+
+                                    onTap: () {
+
+                                      Navigator.pop(
+                                        context,
+                                      );
+
+                                      editEntry(
+                                        index,
+                                      );
+                                    },
+                                  ),
+
+                                  ListTile(
+
+                                    leading:
+                                    const Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
+
+                                    title:
+                                    const Text(
+
+                                      "Delete Entry",
+
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                      ),
+                                    ),
+
+                                    onTap: () {
+
+                                      Navigator.pop(
+                                        context,
+                                      );
+
+                                      deleteEntry(
+                                        index,
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+
+                      child: Container(
+
+                        width:
+                        double.infinity,
+
+                        margin:
+                        const EdgeInsets.only(
+                          bottom: 12,
+                        ),
+
+                        padding:
+                        const EdgeInsets.all(16),
+
+                        decoration:
+                        BoxDecoration(
+
+                          color:
+                          Colors.white10,
+
+                          borderRadius:
+                          BorderRadius.circular(
+                            20,
+                          ),
+                        ),
+
+                        child: Column(
+
+                          crossAxisAlignment:
+                          CrossAxisAlignment
+                              .start,
+
+                          children: [
+
+                            Text(
+
+                              entry['time'],
+
+                              style:
+                              TextStyle(
+
+                                fontSize: 11,
+
+                                color:
+                                Colors.white
+                                    .withValues(
+                                  alpha:0.6,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(
+                              height: 6,
+                            ),
+
+                            Text(
+
+                              entry['content'],
+
+                              style:
+                              const TextStyle(
+
+                                fontSize: 16,
+
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              AnimatedPadding(
 
-            if (aiResponse != null)
+                duration:
+                const Duration(
+                  milliseconds: 200,
+                ),
 
-              Container(
+                padding: EdgeInsets.only(
 
-                width: double.infinity,
-
-                padding:
-                const EdgeInsets.all(16),
-
-                decoration:
-                BoxDecoration(
-
-                  color: Colors.white10,
-
-                  borderRadius:
-                  BorderRadius.circular(
-                    20,
-                  ),
+                  bottom:
+                  MediaQuery.of(context)
+                      .viewInsets.bottom,
                 ),
 
                 child: Column(
 
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
-
                   children: [
 
-                    Text(
+                    TextField(
 
-                      aiResponse!.title,
+                      focusNode:
+                      entryFocusNode,
 
-                      style:
-                      const TextStyle(
+                      controller:
+                      controller,
 
-                        fontSize: 22,
+                      minLines: 1,
+                      maxLines: 5,
 
-                        fontWeight:
-                        FontWeight.bold,
+                      decoration:
+                      InputDecoration(
+
+                        hintText:
+                        "Write a quick thought...",
+
+                        border:
+                        OutlineInputBorder(
+
+                          borderRadius:
+                          BorderRadius.circular(
+                            20,
+                          ),
+                        ),
+
+                        contentPadding:
+                        const EdgeInsets.all(
+                          16,
+                        ),
                       ),
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
 
-                    Text(
+                    SizedBox(
 
-                      "Mood: ${aiResponse!.mood}",
+                      width:
+                      double.infinity,
 
-                      style:
-                      const TextStyle(
+                      child:
+                      ElevatedButton.icon(
 
-                        fontSize: 14,
+                        onPressed:
+                        addEntry,
 
-                        color: Colors.grey,
+                        icon: const Icon(
+                          Icons.add,
+                        ),
+
+                        label: const Text(
+                          "Add Entry",
+                        ),
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    if (!keyboardOpen) ...[
 
-                    Text(
-
-                      aiResponse!.summary,
-
-                      style:
-                      const TextStyle(
-
-                        fontSize: 16,
-
-                        height: 1.5,
+                      const SizedBox(
+                        height: 10,
                       ),
-                    ),
 
-                    const SizedBox(height: 16),
+                      SizedBox(
 
-                    const Text(
+                        width:
+                        double.infinity,
 
-                      "Highlights",
+                        child:
+                        ElevatedButton.icon(
 
-                      style: TextStyle(
-                        fontWeight:
-                        FontWeight.bold,
-                      ),
-                    ),
+                          onPressed:
+                          isLoadingSummary
+                              ? null
+                              : generateSummary,
 
-                    const SizedBox(height: 8),
-
-                    ...aiResponse!
-                        .highlights
-                        .map(
-
-                          (highlight) {
-
-                        return Padding(
-
-                          padding:
-                          const EdgeInsets.only(
-                            bottom: 4,
+                          icon: const Icon(
+                            Icons.auto_awesome,
                           ),
 
-                          child: Text(
-                            "• $highlight",
+                          label: Text(
+
+                            isLoadingSummary
+                                ? "Generating..."
+                                : aiResponse == null
+                                ? "Generate Summary"
+                                : aiNeedsRefresh
+                                ? "Regenerate Summary"
+                                : "View Summary",
                           ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    const Text(
-
-                      "Suggestion",
-
-                      style: TextStyle(
-                        fontWeight:
-                        FontWeight.bold,
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    Text(
-                      aiResponse!.suggestion,
-                    ),
+                    ],
                   ],
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );
