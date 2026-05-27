@@ -50,6 +50,11 @@ class _HomeScreenState
     loadEntry();
   }
 
+  void forceCloseKeyboard() {
+    FocusScope.of(context).unfocus();
+    entryFocusNode.unfocus();
+  }
+
   void loadEntry() {
 
     final entry =
@@ -114,73 +119,50 @@ class _HomeScreenState
     });
 
     controller.clear();
-
+    FocusScope.of(context).unfocus();
     aiNeedsRefresh = true;
 
     await saveEntry();
-
+    forceCloseKeyboard();
     setState(() {});
   }
 
   void editEntry(int index) {
-
-    final editController =
-    TextEditingController(
-
+    final editController = TextEditingController(
       text: entries[index]['content'],
     );
 
     showDialog(
-
       context: context,
-
       builder: (context) {
-
         return AlertDialog(
-
-          title: const Text(
-            "Edit Entry",
-          ),
-
+          title: const Text("Edit Entry"),
           content: TextField(
-
             controller: editController,
-
+            autofocus: true, // keyboard opens automatically
             maxLines: null,
-
-            decoration:
-            const InputDecoration(
-              hintText: "Edit your entry",
-            ),
           ),
-
           actions: [
-
             TextButton(
-
               onPressed: () {
                 Navigator.pop(context);
+                forceCloseKeyboard();
               },
-
               child: const Text("Cancel"),
             ),
-
             ElevatedButton(
-
               onPressed: () async {
-
                 entries[index]['content'] =
                     editController.text.trim();
 
                 aiNeedsRefresh = true;
-
                 await saveEntry();
 
-                setState(() {});
-
                 Navigator.pop(context);
-              },
 
+                forceCloseKeyboard(); // IMPORTANT
+                setState(() {});
+              },
               child: const Text("Save"),
             ),
           ],
@@ -190,13 +172,13 @@ class _HomeScreenState
   }
 
   void deleteEntry(int index) async {
-
+    FocusScope.of(context).unfocus();
     entries.removeAt(index);
 
     aiNeedsRefresh = true;
 
     await saveEntry();
-
+    forceCloseKeyboard();
     setState(() {});
   }
 
@@ -241,7 +223,7 @@ class _HomeScreenState
     setState(() {
       isLoadingSummary = true;
     });
-
+    forceCloseKeyboard();
     try {
 
       final combinedText =
@@ -260,7 +242,7 @@ class _HomeScreenState
       aiResponse = response;
 
       aiNeedsRefresh = false;
-
+      forceCloseKeyboard();
       await saveEntry();
 
       setState(() {});
@@ -494,7 +476,7 @@ class _HomeScreenState
   }
 
   Future pickDate() async {
-
+    FocusScope.of(context).unfocus();
     await saveEntry();
 
     final picked =
@@ -843,6 +825,10 @@ class _HomeScreenState
 
                       controller:
                       controller,
+
+                      onTap: () {
+                        FocusScope.of(context).requestFocus(entryFocusNode);
+                      },
 
                       minLines: 1,
                       maxLines: 5,
